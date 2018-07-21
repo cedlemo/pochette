@@ -27,3 +27,4 @@ VALUES('Documentation OCaml','http://caml.inria.fr/pub/docs/manual-ocaml/',NOW()
 ('JJC De Mondoville Dominus Regnavit Mov. 4&5/6','https://www.youtube.com/watch?v=xm1_HdBWmL8',NOW(),FALSE, 4),
 ('Shahmen Poison','https://soundcloud.com/blessxshahmen/poison-2',NOW(),FALSE, 3),
 ('OCaml Mooc','https://www.fun-mooc.fr/courses/course-v1:parisdiderot+56002+session03/about',NOW(),FALSE, 2);
+GRANT ALL PRIVILEGES ON POCHETTE_DB.* TO pochette_user@localhost IDENTIFIED BY 'pochette_password';
