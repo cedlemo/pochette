@@ -8,6 +8,8 @@ public class Link {
 		String url;
 		LocalDate creationDate;
 		boolean consumed;
+		LinkType linkType;
+		
 		/**
 		 * @return the idLink
 		 */
@@ -69,19 +71,33 @@ public class Link {
 			this.consumed = consumed;
 		}
 		/**
+		 * @return the linkType
+		 */
+		public LinkType getLinkType() {
+			return linkType;
+		}
+		/**
+		 * @param linkType the linkType to set
+		 */
+		public void setLinkType(LinkType linkType) {
+			this.linkType = linkType;
+		}
+		/**
 		 * @param idLink
 		 * @param title
 		 * @param url
 		 * @param creationDate
 		 * @param consumed
+		 * @param linkType
 		 */
-		public Link(int idLink, String title, String url, LocalDate creationDate, boolean consumed) {
+		public Link(int idLink, String title, String url, LocalDate creationDate, boolean consumed, LinkType linkType) {
 			super();
 			this.setIdLink(idLink);
 			this.setTitle(title);
 			this.setUrl(url);
 			this.setCreationDate(creationDate);
 			this.setConsumed(consumed);
+			this.setLinkType(linkType);
 		}
 		
 		
