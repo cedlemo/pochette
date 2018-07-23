@@ -69,13 +69,15 @@ public class Link {
 			this.consumed = consumed;
 		}
 		/**
+		 * @param idLink
 		 * @param title
 		 * @param url
 		 * @param creationDate
 		 * @param consumed
 		 */
-		public Link(String title, String url, LocalDate creationDate, boolean consumed) {
+		public Link(int idLink, String title, String url, LocalDate creationDate, boolean consumed) {
 			super();
+			this.setIdLink(idLink);
 			this.setTitle(title);
 			this.setUrl(url);
 			this.setCreationDate(creationDate);
