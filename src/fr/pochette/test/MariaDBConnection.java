@@ -7,13 +7,17 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
+
+import fr.pochette.bo.Link;
+import fr.pochette.dal.LinkDaoMariaDBJdbcImpl;
 
 class MariaDBConnection {
 	
 	@Test
-	void test() {
+	void test_connection() {
 		String url ="jdbc:mariadb://localhost/";
 		String user = "pochette_user";
 		String password = "pochette_password";
@@ -29,5 +33,23 @@ class MariaDBConnection {
 			fail("La connection a échouée : " + e.getLocalizedMessage());
 		}
 	}
-
+	
+	@Test
+	void test_link_list_all_request() {
+		String url ="jdbc:mariadb://localhost/POCHETTE_DB";
+		String user = "pochette_user";
+		String password = "pochette_password";
+		try (Connection cnx = DriverManager.getConnection(url, user, password);){
+				LinkDaoMariaDBJdbcImpl dao = new LinkDaoMariaDBJdbcImpl();
+				List<Link> links = dao._listAll(cnx);
+				assertEquals(5, links.size());
+				for(Link l : links) {
+					if(l.getIdLink() == 1)
+						assertEquals("Documentation OCaml", l.getTitle());
+				}
+		}
+		catch(SQLException e) {
+			fail("La connection a échouée : " + e.getLocalizedMessage());
+		}
+	}
 }

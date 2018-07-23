@@ -3,6 +3,7 @@
 Little java web application to test Java EE + Mariadb + REST api + Ajax
 
 * [Install Mariadb driver and test connection](#install-mariadb-driver-and-test-connection)
+* [Create the DAL part](#create-the-dal-part)
 
 ## Install Mariadb driver and test the connection.
 
@@ -51,5 +52,63 @@ class MariaDBConnection {
 		}
 	}
 
+}
+```
+
+## Create the DAL part
+
+I only need for now to list all the links and see one link based on its id.
+
+In the DAL package :
+* DAOFactory.java
+
+```java
+package fr.pochette.dal;
+
+public class DAOFactory {
+	public static LinkDAO getLinkDAO() {
+		return new LinkDaoMariaDBJdbcImpl();
+	}
+}
+```
+
+* LinkDAO.java
+
+```java
+package fr.pochette.dal;
+
+import java.util.List;
+
+import fr.pochette.bo.Link;
+
+public interface LinkDAO {
+	public List<Link> listAll() ;
+
+	public Link getLink(int id);
+}
+```
+
+* LinkDaoMariaDBJdbcImpl.java
+
+```java
+package fr.pochette.dal;
+
+import java.util.List;
+
+import fr.pochette.bo.Link;
+
+public class LinkDaoMariaDBJdbcImpl implements LinkDAO {
+
+	@Override
+	public List<Link> listAll() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Link getLink(int id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
 ```
