@@ -4,6 +4,7 @@ Little java web application to test Java EE + Mariadb + REST api + Ajax
 
 * [Install Mariadb driver and test connection](#install-mariadb-driver-and-test-connection)
 * [Create the DAL part](#create-the-dal-part)
+* [Handle DAL exceptions](#handle-dal-exceptions)
 
 ## Install Mariadb driver and test the connection.
 
@@ -112,3 +113,78 @@ public class LinkDaoMariaDBJdbcImpl implements LinkDAO {
 	}
 }
 ```
+
+Add the code to generate the requests:
+
+```java
+public class LinkDaoMariaDBJdbcImpl implements LinkDAO {
+
+    public static final String SELECT_ALL_LINKS =
+        "SELECT idLink, title, url, creationDate, consumed, l.idType as l_idType, label FROM LINKS l"
+        + " JOIN TYPES t ON l.idType = t.idType;";
+
+    public static final String SELECT_LINK_BY_ID=
+        "SELECT idLink, title, url, creationDate, consumed, l.idType as l_idType, label FROM LINKS l"
+        + " JOIN TYPES t ON l.idType = t.idType WHERE idLink=?;";
+
+    @Override
+    public List<Link> listAll() {
+        List<Link> links = null;
+	try(Connection cnx = DBConnexionProvider.getConnection()){
+            links = _listAll(cnx);
+	} catch (SQLException e) {
+            e.printStackTrace();
+	}
+	return links;
+    }
+
+    public List<Link> _listAll(Connection cnx) throws SQLException {
+        List<Link> links = new ArrayList<Link>();
+        Statement st = cnx.createStatement();
+        ResultSet rs = st.executeQuery(SELECT_ALL_LINKS);
+        while(rs.next()) {
+            Link link = _buildLink(rs);
+            links.add(link);
+        }
+	st.close();
+            return links;
+    }
+
+    @Override
+    public Link getLink(int id) {
+        Link link = null;
+        try(Connection cnx = DBConnexionProvider.getConnection()) {
+            link = _getLink(cnx, id);
+        } catch(SQLException e) {
+            e.printStackTrace();
+        }
+            return link;
+	}
+
+     public Link _getLink(Connection cnx, int id) throws SQLException {
+        Link link = null;
+        PreparedStatement pstmt = cnx.prepareStatement(SELECT_LINK_BY_ID);
+        pstmt.setInt(1,  id);
+        ResultSet rs = pstmt.executeQuery();
+        while(rs.next()) {
+            link = _buildLink(rs);
+        }
+        pstmt.close();
+        return link;
+    }
+
+    private Link _buildLink(ResultSet rs) throws SQLException {
+        LinkType linkType = new LinkType(rs.getInt("l_idType"), rs.getString("label"));
+        Link link = new Link(rs.getInt("idLink"),
+	                     rs.getString("title"),
+			     rs.getString("url"),
+                             rs.getDate("creationDate").toLocalDate(),
+                             rs.getBoolean("consumed"),
+                             linkType);
+        return link;
+    }
+}
+```
+
+## Handle DAL exceptions:
+
