@@ -10,6 +10,7 @@ import java.util.List;
 
 import fr.pochette.bo.Link;
 import fr.pochette.bo.LinkType;
+import fr.pochette.exception.GenericException;
 
 public class LinkDaoMariaDBJdbcImpl implements LinkDAO {
 
@@ -22,12 +23,15 @@ public class LinkDaoMariaDBJdbcImpl implements LinkDAO {
 					+ " JOIN TYPES t ON l.idType = t.idType WHERE idLink=?;";
 	
 	@Override
-	public List<Link> listAll() {
+	public List<Link> listAll() throws GenericException {
 		List<Link> links = null;
 		try(Connection cnx = DBConnexionProvider.getConnection()){
 			links = _listAll(cnx);
 		} catch (SQLException e) {
 			e.printStackTrace();
+			GenericException ge = new GenericException();
+			ge.addError(ErrorCodesDal.LIST_ALL_LINKS);
+			throw ge;
 		}
 		return links;
 	}
@@ -45,12 +49,15 @@ public class LinkDaoMariaDBJdbcImpl implements LinkDAO {
 	}
 	
 	@Override
-	public Link getLink(int id) {
+	public Link getLink(int id) throws GenericException {
 		Link link = null;
 		try(Connection cnx = DBConnexionProvider.getConnection()) {
 			link = _getLink(cnx, id);
 		} catch(SQLException e) {
 			e.printStackTrace();
+			GenericException ge = new GenericException();
+			ge.addError(ErrorCodesDal.SELECT_LINK_BY_ID);
+			throw ge;
 		}
 		return link;
 	}
