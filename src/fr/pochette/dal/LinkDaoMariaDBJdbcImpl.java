@@ -37,15 +37,10 @@ public class LinkDaoMariaDBJdbcImpl implements LinkDAO {
 		Statement st = cnx.createStatement();
 		ResultSet rs = st.executeQuery(SELECT_ALL_LINKS);
 		while(rs.next()) {
-			LinkType linkType = new LinkType(rs.getInt("l_idType"), rs.getString("label"));
-			Link link = new Link(rs.getInt("idLink"),
-													 rs.getString("title"),
-													 rs.getString("url"),
-													 rs.getDate("creationDate").toLocalDate(),
-													 rs.getBoolean("consumed"),
-													 linkType);
+			Link link = _buildLink(rs);
 			links.add(link);
 		}
+		st.close();
 		return links;
 	}
 	
