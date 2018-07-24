@@ -188,3 +188,83 @@ public class LinkDaoMariaDBJdbcImpl implements LinkDAO {
 
 ## Handle DAL exceptions:
 
+In order to handle all the exceptions, there will be one generic exception that
+is used to catch all the dal exceptions via user defined error codes. Those
+error codes will be later translated in readable message thanks to the
+`ErrorMessageReader` class coupled with the *error_messages.properties* file.
+
+* GenericException.java
+
+```java
+package fr.pochette.exception;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class GenericException extends Exception{
+
+	private static final long serialVersionUID = 1L;
+
+	private List<Integer> errorCodes;
+
+	public GenericException(){
+		this.errorCodes = new ArrayList<Integer>();
+	}
+
+	public void addError(int code) {
+		this.errorCodes.add(code);
+	}
+
+	public List<Integer> getErrorCodes(){
+		return this.errorCodes;
+	}
+
+	public boolean hasError() {
+		return this.errorCodes.size() > 0;
+	}
+}
+
+```
+
+* ErrorMessageReader.java
+
+```java
+package fr.pochette.exception;
+
+import java.util.ResourceBundle;
+
+public class ErrorMessageReader {
+    private static ResourceBundle rb;
+
+    static {
+        try {
+            rb = ResourceBundle.getBundle("fr.pochette.exception.error_messages");
+	}
+	catch(Exception e)
+	{
+	    e.printStackTrace();
+	}
+    }
+
+    public static String getMessage(int code)
+    {
+        String message="";
+        try
+        {
+            if(rb!=null)
+            {
+                message=rb.getString(String.valueOf(code));
+    	} else {
+                message="Something went wrong with the file that contains the error messages";
+    	}
+        } catch(Exception e) {
+            e.printStackTrace();
+            message="Unknown error";
+        }
+
+        return message;
+    }
+}
+```
+
+
