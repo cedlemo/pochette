@@ -52,4 +52,18 @@ class MariaDBConnection {
 			fail("La connection a échouée : " + e.getLocalizedMessage());
 		}
 	}
+	
+	@Test
+	void test_link_select_by_id() {
+		String url ="jdbc:mariadb://localhost/POCHETTE_DB";
+		String user = "pochette_user";
+		String password = "pochette_password";
+		try (Connection cnx = DriverManager.getConnection(url, user, password);){
+				LinkDaoMariaDBJdbcImpl dao = new LinkDaoMariaDBJdbcImpl();
+				Link link = dao._getLink(cnx, 1);
+				assertEquals("Documentation OCaml", link.getTitle());
+		} catch(SQLException e) {
+			fail("La connection a échouée : " + e.getLocalizedMessage());
+		}
+	}
 }
