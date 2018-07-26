@@ -3,13 +3,13 @@ package fr.pochette.exception;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GenericException extends Exception{
+public class BusinessException extends Exception{
 
 	private static final long serialVersionUID = 1L;
 	
 	private List<Integer> errorCodes;
 	
-	public GenericException(){
+	public BusinessException(){
 		this.errorCodes = new ArrayList<Integer>();
 	}
 	
