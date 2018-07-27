@@ -5,6 +5,11 @@ Little java web application to test Java EE + Mariadb + REST api + Ajax
 * [Install Mariadb driver and test connection](#install-mariadb-driver-and-test-connection)
 * [Create the DAL part](#create-the-dal-part)
 * [Handle DAL exceptions](#handle-dal-exceptions)
+* [Create a simple BLL](#create-a-simple-bll)
+* [Configure the REST interface](#configure-the-rest-interface)
+  * [Install the dependencies](#install-the-dependencies)
+  * [Configure the REST path](#configure-the-rest-path)
+  * [Create a resource class](#create-a-resource-class)
 
 ## Install Mariadb driver and test the connection.
 
@@ -41,12 +46,30 @@ class MariaDBConnection {
 		String user = "pochette_user";
 		String password = "pochette_password";
 		try (Connection conn = DriverManager.getConnection(url, user, password);
-				Statement stmt = conn.createStatement()){
+				Statement stmt = conn.createStatement(
                 //execute query
                 ResultSet rs = stmt.executeQuery("SELECT 'Hello World!'");
                 //position result to first
                 rs.first();
-                assertTrue("Hello World!".equals(rs.getString(1)));
+                d>javax.xml.bind</groupId>
+    <artifactId>jaxb-api</artifactId>
+    <version>2.3.0</version>
+</dependency>
+<dependency>
+    <groupId>com.sun.xml.bind</groupId>
+    <artifactId>jaxb-core</artifactId>
+    <version>2.3.0</version>
+</dependency>
+<dependency>
+   <groupId>com.sun.xml.bind</groupId>
+   <artifactId>jaxb-impl</artifactId>
+   <version>2.3.0</version>
+</dependency>
+<dependency>
+    <groupId>javax.activation</groupId>
+    <artifactId>activation</artifactId>
+    <version>1.1.1</version>
+</dependency>assertTrue("Hello World!".equals(rs.getString(1))){));
 		}
 		catch(SQLException e) {
 			fail("La connection a échouée : " + e.getLocalizedMessage());
@@ -186,6 +209,29 @@ public class LinkDaoMariaDBJdbcImpl implements LinkDAO {
 }
 ```
 
+The database configuration is saved in the file *WebContent/META-INF/context.xml*.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Context>
+	<Resource
+		name="jdbc/pool_cnx"
+
+		driverClassName="org.mariadb.jdbc.Driver"
+		type="javax.sql.DataSource"
+
+		url="jdbc:mariadb://localhost/POCHETTE_DB"
+		username="pochette_user"
+		password="pochette_password"
+
+		maxTotal="100"
+		maxIdle="30"
+		maxWaitMillis="10000"
+	/>
+
+</Context>
+```
+
 ## Handle DAL exceptions:
 
 In order to handle all the exceptions, there will be one generic exception that
@@ -267,4 +313,174 @@ public class ErrorMessageReader {
 }
 ```
 
+## Create a simple BLL
+
+In a package *fr.pochette.bll* the following file is added:
+
+* LinkManager.java
+
+```java
+import java.util.List;
+
+import fr.pochette.bo.Link;
+import fr.pochette.dal.DAOFactory;
+import fr.pochette.dal.LinkDAO;
+import fr.pochette.exception.BusinessException;
+
+public class LinkManager {
+	private LinkDAO linkDAO;
+
+	public LinkManager() {
+		this.linkDAO = DAOFactory.getLinkDAO();
+	}
+
+	public List<Link> listAll() throws BusinessException{
+		return this.linkDAO.listAll();
+	}
+
+	public Link getLink(int id) throws BusinessException {
+		return this.linkDAO.getLink(id);
+	}
+}
+```
+
+## Configure the REST interface
+
+### Install the dependencies
+
+Now the project will be converted to a Maven project and in the *pom.xml* file
+the implementation of the JAX-RS 2.0 specification will be specified so that
+Maven will be able to download the needed jars.
+
+* Right click on the Project > Configure > convert to Maven Project.
+    * Group Id : *Pochette*
+    * Artifact Id : *Pochette*
+    * Version : *0.0.1-SNAPSHOT*
+    * Packaging : *war*
+    * Pochette : *Pochette*
+
+This will generate a pom.xml file in the root directory of the project. Now here
+is the part to add in order to use the Apache CXF implementation.
+
+```diff
+diff --git a/pom.xml b/pom.xml
+index 9b3e830..0eb5cc7 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -5,6 +5,18 @@
+   <version>0.0.1-SNAPSHOT</version>
+   <packaging>war</packaging>
+   <name>Pochette</name>
++  <dependencies>
++       <dependency>
++       <groupId>org.apache.cxf</groupId>
++       <artifactId>cxf-rt-frontend-jaxrs</artifactId>
++       <version>3.1.6</version>
++       </dependency>
++        <dependency>
++       <groupId>org.apache.cxf</groupId>
++       <artifactId>cxf-rt-rs-http-sci</artifactId>
++       <version>3.1.6</version>
++       </dependency>
++  </dependencies>
+   <build>
+     <sourceDirectory>src</sourceDirectory>
+     <resources>
+```
+If the JDK version used is >= 9 then it is necessary to add the following
+dependencies ([source](https://stackoverflow.com/questions/46920461/java-lang-noclassdeffounderror-javax-activation-datasource-on-wsimport-intellij )):
+
+```xml
+<dependency>
+    <groupId>javax.xml.bind</groupId>
+    <artifactId>jaxb-api</artifactId>
+    <version>2.3.0</version>
+</dependency>
+<dependency>
+    <groupId>com.sun.xml.bind</groupId>
+    <artifactId>jaxb-core</artifactId>
+    <version>2.3.0</version>
+</dependency>
+<dependency>
+   <groupId>com.sun.xml.bind</groupId>
+   <artifactId>jaxb-impl</artifactId>
+   <version>2.3.0</version>
+</dependency>
+<dependency>
+    <groupId>javax.activation</groupId>
+    <artifactId>activation</artifactId>
+    <version>1.1.1</version>
+</dependency>
+```
+
+All the dependencies will be downloaded after the following actions:
+* right click on the project
+* select Maven
+* select Update Project
+
+### Configure the REST path
+
+In the package *fr.pochette.rest*, a new class is created:
+
+```java
+package fr.pochette.rest;
+
+import javax.ws.rs.ApplicationPath;
+import javax.ws.rs.core.Application;
+
+@ApplicationPath("/rest")
+public class ConfigurationApplicationREST extends Application {
+
+}
+```
+
+This class will be detected by Tomcat and will be used as a configuration for
+the REST application.
+
+### Create a resource class
+
+Now that there is a class that define the root path of the REST application,
+I need to create a resource class that will define the request that are to be
+handled (GET, POST, ...). This class will be manager for the `Link` objects.
+
+*LinksManagement*
+
+```java
+package fr.pochette.rest;
+
+import java.util.List;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+
+import fr.pochette.bll.LinkManager;
+import fr.pochette.bo.Link;
+import fr.pochette.exception.BusinessException;
+
+@Path("/links")
+public class LinksManagement {
+
+	@GET
+	public String getLinks() {
+		LinkManager linkManager = new LinkManager();
+		String linkTitles = "";
+		try {
+			List<Link> links = linkManager.listAll();
+			for(Link l : links) {
+				linkTitles += l.getTitle() + "; " ;
+			}
+		} catch (BusinessException e) {
+			linkTitles = "An error occured " + e.getLocalizedMessage();
+		}
+		return linkTitles;
+	}
+}
+```
+
+Now the connection with a browser to *http://localhost:8080/Pochette/rest/links*
+returns :
+
+```
+Detecting use case of GADT with OCaml; Documentation OCaml; OCaml Mooc; Shahmen Poison; JJC De Mondoville Dominus Regnavit Mov. 4&5/6;
+```
 
