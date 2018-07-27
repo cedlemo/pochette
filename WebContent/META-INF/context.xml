@@ -6,7 +6,7 @@
 		driverClassName="org.mariadb.jdbc.Driver"
 		type="javax.sql.DataSource"
 		
-		url="jdbc:sqlserver://localhost;databasename=POCHETTE_DB"
+		url="jdbc:mariadb://localhost/POCHETTE_DB"
 		username="pochette_user"
 		password="pochette_password"
 		
