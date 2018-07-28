@@ -10,6 +10,10 @@ Little java web application to test Java EE + Mariadb + REST api + Ajax
   * [Install the dependencies](#install-the-dependencies)
   * [Configure the REST path](#configure-the-rest-path)
   * [Create a resource class](#create-a-resource-class)
+  * [Return xml answer](#return-xml-answer)
+    * [Support the JAXB specification](#support-the-jaxb-specification)
+    * [Link class serializable in xml](#link-class-serializable-in-xml)
+    * [LinksManagement methods return Response objects](#linksmanagemenent-methods-return-response-objects)
 
 ## Install Mariadb driver and test the connection.
 
@@ -484,3 +488,182 @@ returns :
 Detecting use case of GADT with OCaml; Documentation OCaml; OCaml Mooc; Shahmen Poison; JJC De Mondoville Dominus Regnavit Mov. 4&5/6;
 ```
 
+### Return xml answer
+
+In order to be able to return xml anwsers, it is necessary to add support for the
+JAXB specification, to make the `Link` class easily serializable in xml and to
+make the `LinksManagement` methods returns some usable responses.
+
+#### Support for the JAXB specification
+
+he JAXB APIs are considered to be Java EE APIs, and therefore are no longer contained on the default class path in Java SE 9. In Java 11 they are completely removed from the JDK.
+
+ressources : [1](https://stackoverflow.com/questions/51564844/java-ee-rest-xml-support-javax-xml-bind-jaxbcontext-missing), [2](https://stackoverflow.com/questions/43574426/how-to-resolve-java-lang-noclassdeffounderror-javax-xml-bind-jaxbexception-in-j)
+
+So if you have Java 6/7 or 8, nothing has to be done to have access to the JAXB api.
+For Java 9, you can modify the pom.xml file with
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>javax.xml.bind</groupId>
+        <artifactId>jaxb-api</artifactId>
+        <version>2.3.0</version>
+    </dependency>
+    <dependency>
+        <groupId>com.sun.xml.bind</groupId>
+        <artifactId>jaxb-impl</artifactId>
+        <version>2.3.0</version>
+    </dependency>
+    <dependency>
+        <groupId>org.glassfish.jaxb</groupId>
+        <artifactId>jaxb-runtime</artifactId>
+        <version>2.3.0</version>
+    </dependency>
+    <dependency>
+        <groupId>javax.activation</groupId>
+        <artifactId>activation</artifactId>
+        <version>1.1.1</version>
+    </dependency>
+</dependencies>
+```
+
+If with a Java version equals to 10, the quick and dirty way is to add the following
+command-line option : `--add-modules java.xml.bind`.
+
+In eclipse this can be done via:
+
+* Right click on the project
+* Run as
+* Run Configurations
+* Go on the Arguments panel
+* In the Vm arguments entry add with a space char ` --add-modules java.xml.bind`
+
+#### Link class serializable in xml
+
+The important thing to note is the `@XmlRootElement` annotation: it will
+define the xml element that describes any *Link* object.
+
+The presence of an empty constructor is needed too.
+
+* src/fr/pochette/bo/Link.java
+
+```diff
+diff --git a/src/fr/pochette/bo/Link.java b/src/fr/pochette/bo/Link.java
+index 6fc94d5..b8293ef 100644
+--- a/src/fr/pochette/bo/Link.java
++++ b/src/fr/pochette/bo/Link.java
+@@ -1,8 +1,14 @@
+ package fr.pochette.bo;
+
+ import java.time.LocalDate;
+
+-public class Link {
++import javax.xml.bind.annotation.XmlRootElement;
++
++@XmlRootElement(name="link")
++public class Link {
+                int idLink;
+                String title;
+                String url;
+@@ -82,6 +88,12 @@ public class Link {
+                public void setLinkType(LinkType linkType) {
+                        this.linkType = linkType;
+                }
++               /**
++                *
++                */
+               public Link() {
++                       super();
++               }
+                /**
+                 * @param idLink
+                 * @param title
+@@ -99,7 +111,4 @@ public class Link {
+                        this.setConsumed(consumed);
+                        this.setLinkType(linkType);
+                }
+-
+-
+-
+ }
+```
+
+#### LinksManagement methods return Response objects
+
+Previously, what was returned was basic java String. Now the objects returned
+ are Response objects form *javax.rw.rs.core.Response*. This kind of object allows
+ to specify the status of the Http response, and the object to use to fill the
+ response body.
+
+ ```java
+package fr.pochette.rest;
+
+import java.util.List;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.GenericEntity;
+
+import fr.pochette.bll.LinkManager;
+import fr.pochette.bo.Link;
+import fr.pochette.exception.BusinessException;
+
+@Path("/links")
+public class LinksManagement {
+
+	@GET
+	@Produces(MediaType.APPLICATION_XML)
+	public Response getLinks() {
+		LinkManager linkManager = new LinkManager();
+		List<Link> links = null;
+		try {
+			links = linkManager.listAll();
+		} catch (BusinessException e) {
+			e.printStackTrace();
+		}
+		GenericEntity<List<Link>> resultat = new GenericEntity<List<Link>>(links) {};
+		return Response
+				.ok()
+				.entity(resultat)
+				.build();
+	}
+
+	@GET
+	@Path("/{id : \\d+}")
+	@Produces(MediaType.APPLICATION_XML)
+	public Response getLink(@PathParam("id") int id) {
+		LinkManager linkManager = new LinkManager();
+		Link link = null;
+		try {
+			link = linkManager.getLink(id);
+		} catch (BusinessException e) {
+			e.printStackTrace();
+		}
+		return Response
+				.ok()
+				.entity(link)
+				.build();
+	}
+}
+```
+
+Now every access to *http://localhost:8080/Pochette/rest/links* or *http://localhost:8080/Pochette/rest/links/1* will return an xml reponse:
+
+```xml
+<link>
+  <consumed>false</consumed>
+  <creationDate/>
+  <idLink>1</idLink>
+  <linkType>
+    <idType>2</idType>
+    <label>DOCUMENTATION</label>
+  </linkType>
+  <title>Documentation OCaml</title>
+  <url>http://caml.inria.fr/pub/docs/manual-ocaml/</url>
+</link>
+```
