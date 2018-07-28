@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Obtenir une réponse au format JSON</title>
+</head>
+<body>
+
+	<div>
+	<form >
+	<fieldset>
+	<legend>Select the format of the data</legend>
+	<div>
+		<input type="radio" checked id="xml" name="dataFormat">
+		<label for="xml">xml</label>
+	</div>
+		<div>
+		<input type="radio"  id="json" name="dataFormat">
+		<label for="json">json</label>
+	</div>
+	</fieldset>
+		<input type="button" value="Ask for links"  onclick="launchRequest()"/>
+	</form>
+	</div>
+	
+	<div id="success" style="color:green"></div>
+	<div id="failure" style="color:red"></div>
+	
+	<script type="text/javascript">
+	function createXHR() {
+	    if (window.XMLHttpRequest)    //  Objet standard
+	    {
+	        xhr = new XMLHttpRequest();     //  Firefox, Safari, ...
+	    }
+	    else if (window.ActiveXObject)      //  Internet Explorer
+	    {
+	        xhr = new ActiveXObject("Msxml2.XMLHTTP");
+	    }
+	    return xhr;
+	}
+
+	function launchRequest()
+	{
+	    var xhr = createXHR();
+	    xhr.onreadystatechange = function()
+	    {
+	        
+	    	if (xhr.readyState == 4)
+	        {
+	            if (xhr.status == 200)
+	            {
+	            	if(document.getElementById("xml").checked)
+	            		success(new XMLSerializer().serializeToString(xhr.responseXML));
+	            	else 
+	            		success(xhr.responseText);
+	            }
+	            else
+	            {
+	                if(document.getElementById("xml").checked)
+	                	failure(xhr.status, xhr.responseXML);
+	                else
+	            	    failure(xhr.status, xhr.responseText);
+	            }
+	        }
+	    };
+
+	    xhr.open("GET", "/Pochette/rest/links", true);
+	    if(document.getElementById("xml").checked)
+	    	xhr.setRequestHeader("Accept","application/xml");
+	    else
+			xhr.setRequestHeader("Accept","application/json");
+	    xhr.send(null);
+	}	
+	
+	function success(response)
+	{
+		document.getElementById("success").innerHTML=response;
+		document.getElementById("failure").innerHTML="";
+	}
+	
+	function failure(codeResponse, response)
+	{
+		document.getElementById("failure").innerHTML=response;
+		document.getElementById("success").innerHTML="";
+	}
+	
+	</script>
+</body>
+</html>
