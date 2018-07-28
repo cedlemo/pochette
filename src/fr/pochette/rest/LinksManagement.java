@@ -18,7 +18,7 @@ import fr.pochette.exception.BusinessException;
 public class LinksManagement {
 
 	@GET
-	@Produces(MediaType.APPLICATION_XML)
+	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
 	public Response getLinks() {
 		LinkManager linkManager = new LinkManager();
 		List<Link> links = null;
@@ -36,7 +36,7 @@ public class LinksManagement {
 	
 	@GET
 	@Path("/{id : \\d+}")
-	@Produces(MediaType.APPLICATION_XML)
+	@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
 	public Response getLink(@PathParam("id") int id) {
 		LinkManager linkManager = new LinkManager();
 		Link link = null;
