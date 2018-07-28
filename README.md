@@ -14,6 +14,9 @@ Little java web application to test Java EE + Mariadb + REST api + Ajax
     * [Support the JAXB specification](#support-the-jaxb-specification)
     * [Link class serializable in xml](#link-class-serializable-in-xml)
     * [LinksManagement methods return Response objects](#linksmanagemenent-methods-return-response-objects)
+  * [Return response in json format](#return-response-in-json-format)
+    * [Install jackson library](install-jackson-library)
+    * [Specify the new supported format in the LinksManagement methods](#specify-the-new-supported-format-in-the-linksmanagemenent-methods)
 
 ## Install Mariadb driver and test the connection.
 
@@ -665,4 +668,182 @@ Now every access to *http://localhost:8080/Pochette/rest/links* or *http://local
   <title>Documentation OCaml</title>
   <url>http://caml.inria.fr/pub/docs/manual-ocaml/</url>
 </link>
+```
+
+### Return response in json format
+
+#### Install jackson library
+
+In order to be able to use the json format, we need the `jackson` library which
+can be installed via the *pom.xml* file for maven.
+
+```diff
+diff --git a/pom.xml b/pom.xml
+index 336abbb..edc9b72 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -37,6 +37,16 @@
+     <artifactId>javax.activation-api</artifactId>
+     <version>1.2.0</version>
+ </dependency>
++ <dependency>
++ <groupId>org.codehaus.jackson</groupId>
++ <artifactId>jackson-jaxrs</artifactId>
++ <version>1.9.13</version>
++ </dependency>
++ <dependency>
++ <groupId>org.codehaus.jackson</groupId>
++ <artifactId>jackson-xc</artifactId>
++ <version>1.9.13</version>
++ </dependency>
+   </dependencies>
+   <build>
+     <sourceDirectory>src</sourceDirectory>
+```
+
+Then right click on the project in eclipse, click on Maven, Update Project and
+the dependencies will be downloaded.
+
+#### Specify the new supported format in the LinksManagement methods
+
+The `@Produces` annotation supports an array of multiple `MediaType` :
+
+```diff
+diff --git a/src/fr/pochette/rest/LinksManagement.java b/src/fr/pochette/rest/LinksManagement.java
+index 2300860..c759b58 100644
+--- a/src/fr/pochette/rest/LinksManagement.java
++++ b/src/fr/pochette/rest/LinksManagement.java
+@@ -18,7 +18,7 @@ import fr.pochette.exception.BusinessException;
+ public class LinksManagement {
+
+        @GET
+-       @Produces(MediaType.APPLICATION_XML)
++       @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+        public Response getLinks() {
+                LinkManager linkManager = new LinkManager();
+                List<Link> links = null;
+@@ -36,7 +36,7 @@ public class LinksManagement {
+
+        @GET
+        @Path("/{id : \\d+}")
+-       @Produces(MediaType.APPLICATION_XML)
++       @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+        public Response getLink(@PathParam("id") int id) {
+                LinkManager linkManager = new LinkManager();
+                Link link = null;
+```
+
+#### Use Ajax to ask for the data in different formats
+
+The problem now is to specify with format we need. For example every access with
+the browser on *http://localhost:8080/Pochette/rest/links* will return data in the
+xml format.
+
+To solve this, there is Ajax. The following example, is a web page that contains
+a button and two selectors. The selectors configure the format of the data that
+will be requested.
+
+* WebContent/listLinks.html
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Obtenir une réponse au format JSON</title>
+</head>
+<body>
+
+	<div>
+	<form >
+	<fieldset>
+	<legend>Select the format of the data</legend>
+	<div>
+		<input type="radio" checked id="xml" name="dataFormat">
+		<label for="xml">xml</label>
+	</div>
+		<div>
+		<input type="radio"  id="json" name="dataFormat">
+		<label for="json">json</label>
+	</div>
+	</fieldset>
+		<input type="button" value="Ask for links"  onclick="launchRequest()"/>
+	</form>
+	</div>
+
+	<div id="success" style="color:green"></div>
+	<div id="failure" style="color:red"></div>
+
+	<script type="text/javascript">
+	function createXHR() {
+	    if (window.XMLHttpRequest)    //  Objet standard
+	    {
+	        xhr = new XMLHttpRequest();     //  Firefox, Safari, ...
+	    }
+	    else if (window.ActiveXObject)      //  Internet Explorer
+	    {
+	        xhr = new ActiveXObject("Msxml2.XMLHTTP");
+	    }
+	    return xhr;
+	}
+
+	function launchRequest()
+	{
+	    var xhr = createXHR();
+	    xhr.onreadystatechange = function()
+	    {
+
+	    	if (xhr.readyState == 4)
+	        {
+	            if (xhr.status == 200)
+	            {
+	            	if(document.getElementById("xml").checked)
+	            		success(new XMLSerializer().serializeToString(xhr.responseXML));
+	            	else
+	            		success(xhr.responseText);
+	            }
+	            else
+	            {
+	                if(document.getElementById("xml").checked)
+                       	    failure(xhr.status, xhr.responseXML);
+	                else
+	            	    failure(xhr.status, xhr.responseText);
+	            }
+	        }
+	    };
+
+	    xhr.open("GET", "/Pochette/rest/links", true);
+	    if(document.getElementById("xml").checked)
+	    	xhr.setRequestHeader("Accept","application/xml");
+	    else
+        	xhr.setRequestHeader("Accept","application/json");
+	    xhr.send(null);
+	}
+
+	function success(response)
+	{
+		document.getElementById("success").innerHTML=response;
+		document.getElementById("failure").innerHTML="";
+	}
+
+	function failure(codeResponse, response)
+	{
+		document.getElementById("failure").innerHTML=response;
+		document.getElementById("success").innerHTML="";
+	}
+
+	</script>
+</body>
+</html>
+```
+
+Note that the ajax requests are build here :
+
+```javascript
+	    xhr.open("GET", "/Pochette/rest/links", true);
+	    if(document.getElementById("xml").checked)
+	    	xhr.setRequestHeader("Accept","application/xml");
+	    else
+        	xhr.setRequestHeader("Accept","application/json");
+	    xhr.send(null);
 ```
