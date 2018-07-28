@@ -2,6 +2,9 @@ package fr.pochette.bo;
 
 import java.time.LocalDate;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement(name="link")
 public class Link {
 		int idLink;
 		String title;
@@ -83,6 +86,12 @@ public class Link {
 			this.linkType = linkType;
 		}
 		/**
+		 * 
+		 */
+		public Link() {
+			super();
+		}
+		/**
 		 * @param idLink
 		 * @param title
 		 * @param url
@@ -99,7 +108,4 @@ public class Link {
 			this.setConsumed(consumed);
 			this.setLinkType(linkType);
 		}
-		
-		
-		
 }

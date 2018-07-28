@@ -4,6 +4,11 @@ import java.util.List;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.GenericEntity;
 
 import fr.pochette.bll.LinkManager;
 import fr.pochette.bo.Link;
@@ -13,17 +18,36 @@ import fr.pochette.exception.BusinessException;
 public class LinksManagement {
 
 	@GET
-	public String getLinks() {
+	@Produces(MediaType.APPLICATION_XML)
+	public Response getLinks() {
 		LinkManager linkManager = new LinkManager();
-		String linkTitles = "";
+		List<Link> links = null;
 		try {
-			List<Link> links = linkManager.listAll();
-			for(Link l : links) {
-				linkTitles += l.getTitle() + "; " ;
-			}
+			links = linkManager.listAll();
 		} catch (BusinessException e) {
-			linkTitles = "An error occured " + e.getLocalizedMessage();
+			e.printStackTrace();
 		}
-		return linkTitles;
+		GenericEntity<List<Link>> resultat = new GenericEntity<List<Link>>(links) {};
+		return Response
+				.ok()
+				.entity(resultat)
+				.build();
+	}
+	
+	@GET
+	@Path("/{id : \\d+}")
+	@Produces(MediaType.APPLICATION_XML)
+	public Response getLink(@PathParam("id") int id) {
+		LinkManager linkManager = new LinkManager();
+		Link link = null;
+		try {
+			link = linkManager.getLink(id);
+		} catch (BusinessException e) {
+			e.printStackTrace();
+		}
+		return Response
+				.ok()
+				.entity(link)
+				.build();
 	}
 }
