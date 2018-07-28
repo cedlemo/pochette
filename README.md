@@ -443,9 +443,9 @@ the REST application.
 
 ### Create a resource class
 
-Now that there is a class that define the root path of the REST application,
-I need to create a resource class that will define the request that are to be
-handled (GET, POST, ...). This class will be manager for the `Link` objects.
+Now that there is a class that defines the root path of the REST application,
+I need to create a resource class that will manage the requests like GET, POST and so on
+for the `Link` objects.
 
 *LinksManagement*
 
@@ -492,16 +492,15 @@ Detecting use case of GADT with OCaml; Documentation OCaml; OCaml Mooc; Shahmen 
 
 In order to be able to return xml anwsers, it is necessary to add support for the
 JAXB specification, to make the `Link` class easily serializable in xml and to
-make the `LinksManagement` methods returns some usable responses.
+make the `LinksManagement` methods return some usable Http responses.
 
 #### Support for the JAXB specification
 
-he JAXB APIs are considered to be Java EE APIs, and therefore are no longer contained on the default class path in Java SE 9. In Java 11 they are completely removed from the JDK.
+The JAXB APIs are considered to be Java EE APIs, and therefore are no longer contained on the default class path in Java SE 9. In Java 11 they are completely removed from the JDK.
 
 ressources : [1](https://stackoverflow.com/questions/51564844/java-ee-rest-xml-support-javax-xml-bind-jaxbcontext-missing), [2](https://stackoverflow.com/questions/43574426/how-to-resolve-java-lang-noclassdeffounderror-javax-xml-bind-jaxbexception-in-j)
 
-So if you have Java 6/7 or 8, nothing has to be done to have access to the JAXB api.
-For Java 9, you can modify the pom.xml file with
+So if you have Java 6/7 or 8, nothing has to be done to have access to the JAXB api. For Java 9, you can modify the pom.xml file with the following maven dependencies.
 
 ```xml
 <dependencies>
@@ -528,7 +527,7 @@ For Java 9, you can modify the pom.xml file with
 </dependencies>
 ```
 
-If with a Java version equals to 10, the quick and dirty way is to add the following
+If the Java version is equal to 10, the quick and dirty way is to add the following
 command-line option : `--add-modules java.xml.bind`.
 
 In eclipse this can be done via:
@@ -541,12 +540,12 @@ In eclipse this can be done via:
 
 #### Link class serializable in xml
 
-The important thing to note is the `@XmlRootElement` annotation: it will
-define the xml element that describes any *Link* object.
+The two important things to note are:
 
-The presence of an empty constructor is needed too.
+* the `@XmlRootElement` annotation: it defines the xml element that describes any *Link* object.
+* the presence of an empty constructor that is needed.
 
-* src/fr/pochette/bo/Link.java
+##### *src/fr/pochette/bo/Link.java*
 
 ```diff
 diff --git a/src/fr/pochette/bo/Link.java b/src/fr/pochette/bo/Link.java
@@ -591,7 +590,7 @@ index 6fc94d5..b8293ef 100644
 
 #### LinksManagement methods return Response objects
 
-Previously, what was returned was basic java String. Now the objects returned
+Previously, what was returned was basic java String objects. Now the objects returned
  are Response objects form *javax.rw.rs.core.Response*. This kind of object allows
  to specify the status of the Http response, and the object to use to fill the
  response body.
@@ -652,7 +651,7 @@ public class LinksManagement {
 }
 ```
 
-Now every access to *http://localhost:8080/Pochette/rest/links* or *http://localhost:8080/Pochette/rest/links/1* will return an xml reponse:
+Now every access to *http://localhost:8080/Pochette/rest/links* or *http://localhost:8080/Pochette/rest/links/1* will return an xml response:
 
 ```xml
 <link>
